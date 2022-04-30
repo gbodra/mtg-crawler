@@ -2,37 +2,35 @@ import os
 import time
 import asyncio
 import requests
+import threading, queue
 from tqdm.asyncio import tqdm
-from datetime import datetime
 from dotenv import load_dotenv
 from pymongo import MongoClient
 from typing import Callable, List
+from datetime import datetime, timezone
+
+q = queue.Queue()
 
 
-async def savePrice(tcgplayer_id, id):
-    card_price_obj = {}
+def savePriceWorker():
+    while True:
+        item = q.get()
+        print(q.qsize(), flush=True)
+        card_price_obj = {}
 
-    url = 'https://mpapi.tcgplayer.com/v2/product/' + str(tcgplayer_id) + '/pricepoints'
-    tcg_card_pricing = requests.get(url).json()
-    card_price_obj['tcgplayer_id'] = tcgplayer_id
-    card_price_obj['id'] = id
-    card_price_obj['prices'] = tcg_card_pricing
-
-    prices_collection.insert_one(card_price_obj)
-
-async def readPrices(cards_list: List, inner: Callable):
-    tasks = []
-    for card_item in cards_list:
-        tasks.append(
-            inner(card_item['tcgplayer_id'], card_item['id'])
-        )
-    
-    responses = await asyncio.gather(*tasks, return_exceptions=True)
-    return responses
+        url = 'https://mpapi.tcgplayer.com/v2/product/' + str(item[0]) + '/pricepoints'
+        tcg_card_pricing = requests.get(url).json()
+        card_price_obj['tcgplayer_id'] = item[0]
+        card_price_obj['id'] = item[1]
+        card_price_obj['prices'] = tcg_card_pricing
+        card_price_obj['created_at'] = datetime.now(timezone.utc)
+        prices_collection.insert_one(card_price_obj)
+        q.task_done()
 
 
 load_dotenv()
 CACHE = os.environ.get('CACHE')
+THREAD_COUNT = int(os.environ.get('THREAD_COUNT'))
 
 sets_response = requests.get('https://api.scryfall.com/sets')
 
@@ -59,10 +57,15 @@ if CACHE != 'True':
 
 query = {"tcgplayer_id": {"$exists": True}}
 cards = cards_collection.find(query)
-cards_list = []
 
-for card in tqdm(cards, desc='Downloading cards info...'):
-    cards_list.append(card)
+for i in range(THREAD_COUNT):
+    threading.Thread(target=savePriceWorker, daemon=True).start()
 
-print(datetime.now())
-responses = asyncio.get_event_loop().run_until_complete(readPrices(cards_list, savePrice))
+print(datetime.now(timezone.utc))
+
+for card in cards:
+    card_tuple = (card['tcgplayer_id'], card['id'])
+    q.put(card_tuple)
+
+q.join()
+print(datetime.now(timezone.utc))
