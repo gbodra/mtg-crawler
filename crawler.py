@@ -68,8 +68,6 @@ start_time = datetime.now(timezone.utc)
 for i in range(THREAD_COUNT):
     threading.Thread(target=savePriceWorker, daemon=True).start()
 
-# print(datetime.now(timezone.utc))
-
 for card in cards:
     card_tuple = (card['tcgplayer_id'], card['id'])
     q.put(card_tuple)
@@ -77,3 +75,5 @@ for card in cards:
 q.join()
 end_time = datetime.now(timezone.utc)
 print('Tempo de carga:', (end_time - start_time))
+
+# TODO: separar os crawlers em arquivos diferentes
