@@ -19,12 +19,17 @@ def savePriceWorker():
         card_price_obj = {}
 
         url = 'https://mpapi.tcgplayer.com/v2/product/' + str(item[0]) + '/pricepoints'
-        tcg_card_pricing = requests.get(url).json()
-        card_price_obj['tcgplayer_id'] = item[0]
-        card_price_obj['id'] = item[1]
-        card_price_obj['prices'] = tcg_card_pricing
-        card_price_obj['created_at'] = datetime.now(timezone.utc)
-        prices_collection.insert_one(card_price_obj)
+
+        try:
+            tcg_card_pricing = requests.get(url).json()
+            card_price_obj['tcgplayer_id'] = item[0]
+            card_price_obj['id'] = item[1]
+            card_price_obj['prices'] = tcg_card_pricing
+            card_price_obj['created_at'] = datetime.now(timezone.utc)
+            prices_collection.insert_one(card_price_obj)
+        except:
+            print('Error inserting price')
+        
         q.task_done()
 
 
