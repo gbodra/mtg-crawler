@@ -63,14 +63,17 @@ if CACHE != 'True':
 query = {"tcgplayer_id": {"$exists": True}}
 cards = cards_collection.find(query)
 
+start_time = datetime.now(timezone.utc)
+
 for i in range(THREAD_COUNT):
     threading.Thread(target=savePriceWorker, daemon=True).start()
 
-print(datetime.now(timezone.utc))
+# print(datetime.now(timezone.utc))
 
 for card in cards:
     card_tuple = (card['tcgplayer_id'], card['id'])
     q.put(card_tuple)
 
 q.join()
-print(datetime.now(timezone.utc))
+end_time = datetime.now(timezone.utc)
+print((end_time - start_time))
