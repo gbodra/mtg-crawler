@@ -76,4 +76,4 @@ for card in cards:
 
 q.join()
 end_time = datetime.now(timezone.utc)
-print((end_time - start_time))
+print('Tempo de carga:', (end_time - start_time))
