@@ -59,23 +59,22 @@ class Price:
         THRESHOLD = 0.5
         dict_alert = {
             'threshold': THRESHOLD,
-            'created_at': datetime.now(timezone.utc)
+            'created_at': datetime.now(timezone.utc),
+            'cards': []
         }
 
         for item in self.price_dict.items():
             if item[1]['normal_movement_percentage'] > THRESHOLD:
-                dict_alert[item[0]] = {}
-                dict_alert[item[0]]['name'] = self.get_card_name(item[0])
-                dict_alert[item[0]]['last_price'] = item[1]['normal_last_price']
-                dict_alert[item[0]]['normal_movement_money'] = item[1]['normal_movement_money']
-                dict_alert[item[0]]['normal_movement_percentage'] = item[1]['normal_movement_percentage']
+                dict_alert['cards'].append({
+                    'id': item[0],
+                    'name': self.get_card_name(item[0]),
+                    'last_price': item[1]['normal_last_price'],
+                    'normal_movement_money': item[1]['normal_movement_money'],
+                    'normal_movement_percentage': item[1]['normal_movement_percentage']
+                })
 
         alerts_collection = self.db.alerts
         alerts_collection.insert_one(dict_alert)
-        # print('THRESHOLD:', THRESHOLD)
-        # print('Alert list length:', len(dict_alert))
-        # pp = pprint.PrettyPrinter(indent=4)
-        # pp.pprint(dict_alert)
 
     def _get_last_movement(self, list_price):
         if len(list_price) < 2:
