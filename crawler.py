@@ -1,16 +1,17 @@
 import os
 import time
-import asyncio
+import queue
 import requests
-import threading, queue
-from tqdm.asyncio import tqdm
+import threading
+from tqdm import tqdm
 from dotenv import load_dotenv
 from pymongo import MongoClient
-from typing import Callable, List
 from datetime import datetime, timezone
 
 q = queue.Queue()
 
+# TODO: colocar as urls das APIs no arquivo de configuracao
+# TODO: criar log da aplicacao
 
 def savePriceWorker():
     while True:
