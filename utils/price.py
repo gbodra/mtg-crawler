@@ -44,7 +44,9 @@ class Price:
                         {'$eq': ['$$item.printingType', 'Normal']},
                         {'$gt': ['$$item.created_at', earlier]}
                     ]}
-                }}
+                }},
+                'id': 1,
+                '_id': 0,
             }}
         ]
         prices_aggregated_collection = self.db.prices_aggregated
